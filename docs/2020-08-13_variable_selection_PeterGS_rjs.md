@@ -18,6 +18,16 @@ output:
 
 <style type="text/css">
 
+.reveal p:first-child { 
+  margin-top: 0px;    
+}
+.reveal .slides > section {
+  padding: 0px; 
+}
+.reveal div.slides {
+  position: absolute; top: -15%; 
+}
+
 .reveal {
 	font-size: 30pt;
 }
@@ -30,6 +40,10 @@ output:
 .reveal h6 {
   margin: $headingMargin;
   color: #963216;
+}
+
+.header {
+  padding: 50px;
 }
 
 .reveal p {
@@ -50,11 +64,15 @@ output:
 
 
 
-# Too many predictors?
+# Variable or model selection
 
-Why ...
+Why are you modelling?
 
-# Simplify!
+- looking at a focal predictor
 
-How ... ?
+- finding which predictors are _active_ predictors
+
+- predicting value of response from predictors
+
+
 

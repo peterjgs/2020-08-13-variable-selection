@@ -8,11 +8,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
-  <link rel="stylesheet" href="2020-08-13_variable_selection_PeterGS_files/reveal.js-3.3.0.1/css/reveal.css"/>
+  <link rel="stylesheet" href="2020-08-13_variable_selection_PeterGS_rjs_files/reveal.js-3.3.0.1/css/reveal.css"/>
 
 
 
-<link rel="stylesheet" href="2020-08-13_variable_selection_PeterGS_files/reveal.js-3.3.0.1/css/theme/simple.css" id="theme">
+<link rel="stylesheet" href="2020-08-13_variable_selection_PeterGS_rjs_files/reveal.js-3.3.0.1/css/theme/simple.css" id="theme">
 
 
   <!-- some tweaks to reveal css -->
@@ -443,6 +443,7 @@ style.innerHTML = style_script;
 document.getElementsByTagName('head')[0].appendChild(style);
 </script>
 
+    <script src="2020-08-13_variable_selection_PeterGS_rjs_files/header-attrs-2.3/header-attrs.js"></script>
 </head>
 <body>
   <div class="reveal">
@@ -458,6 +459,16 @@ document.getElementsByTagName('head')[0].appendChild(style);
 
 <style type="text/css">
 
+.reveal p:first-child { 
+  margin-top: 0px;    
+}
+.reveal .slides > section {
+  padding: 0px; 
+}
+.reveal div.slides {
+  position: absolute; top: -15%; 
+}
+
 .reveal {
     font-size: 30pt;
 }
@@ -470,6 +481,10 @@ document.getElementsByTagName('head')[0].appendChild(style);
 .reveal h6 {
   margin: $headingMargin;
   color: #963216;
+}
+
+.header {
+  padding: 50px;
 }
 
 .reveal p {
@@ -486,13 +501,20 @@ document.getElementsByTagName('head')[0].appendChild(style);
 
 </style>
 </section>
-<section id="too-many-predictors" class="title-slide slide level1"><h1>Too many predictors?</h1><p>Why …</p></section>
-<section id="simplify" class="title-slide slide level1"><h1>Simplify!</h1><p>How … ?</p></section>
+<section id="variable-or-model-selection" class="title-slide slide level1">
+<h1>Variable or model selection</h1>
+<p>Why are you modelling?</p>
+<ul>
+<li><p>looking at a focal predictor</p></li>
+<li><p>finding which predictors are <em>active</em> predictors</p></li>
+<li><p>predicting value of response from predictors</p></li>
+</ul>
+</section>
     </div>
   </div>
 
-  <script src="2020-08-13_variable_selection_PeterGS_files/reveal.js-3.3.0.1/lib/js/head.min.js"></script>
-  <script src="2020-08-13_variable_selection_PeterGS_files/reveal.js-3.3.0.1/js/reveal.js"></script>
+  <script src="2020-08-13_variable_selection_PeterGS_rjs_files/reveal.js-3.3.0.1/lib/js/head.min.js"></script>
+  <script src="2020-08-13_variable_selection_PeterGS_rjs_files/reveal.js-3.3.0.1/js/reveal.js"></script>
 
   <script>
 
@@ -514,7 +536,7 @@ document.getElementsByTagName('head')[0].appendChild(style);
 
         // Optional reveal.js plugins
         dependencies: [
-          { src: '2020-08-13_variable_selection_PeterGS_files/reveal.js-3.3.0.1/plugin/notes/notes.js', async: true },
+          { src: '2020-08-13_variable_selection_PeterGS_rjs_files/reveal.js-3.3.0.1/plugin/notes/notes.js', async: true },
         ]
       });
     </script>

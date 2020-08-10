@@ -1,0 +1,394 @@
+---
+title: "Variable selection - potential examples"
+output: html_notebook
+---
+
+
+
+```{r setup, include = F}
+
+library(knitr)
+
+knitr::opts_chunk$set(echo = F, warning = F, message = F, 
+                      fig.align = "center", fig.path = "figs/")
+
+##  Need this so tables are formatted nicely
+options("kableExtra.html.bsTable" = T)
+
+```
+
+
+
+```{r}
+
+library(ISwR)
+library(ggplot2)
+library(tidyverse)
+library(GGally)
+library(car)
+library(glmnet)
+library(leaps)
+
+```
+
+
+##  Dalgaard, ch. 11
+
+`cystfibr` data from ISwR package
+
+Note: Collinearity present.
+
+
+age: a numeric vector, age in years
+sex: a numeric vector code, 0: male, 1:female
+height: a numeric vector, height (cm)
+weight: a numeric vector, weight (kg)
+bmp: a numeric vector, body mass (% of normal)
+fev1: a numeric vector, forced expiratory volume
+rv: a numeric vector, residual volume
+frc: a numeric vector, functional residual capacity
+tlc: a numeric vector, total lung capacity
+pemax: a numeric vector, maximum expiratory pressure
+
+```{r}
+
+str(cystfibr)
+
+```
+
+
+
+```{r}
+
+ggpairs(cystfibr, upper = "blank", diag = "blank")
+
+```
+
+
+
+```{r}
+
+pairs(cystfibr, gap = 0)
+
+```
+
+Full model
+
+
+
+```{r}
+
+
+cfib.lm1 <- lm(pemax ~ ., data = cystfibr)
+
+summary(cfib.lm1)
+
+```
+
+
+```{r}
+
+Anova(cfib.lm1, type = "II")
+
+```
+
+Global P value is small but individual P values for terms are not. This suggests collinearity. Check VIFs.
+
+```{r}
+
+vif(cfib.lm1)
+
+```
+
+Five VIF > 10.
+
+Look at correlations
+
+
+```{r}
+
+round(cor(cystfibr), digits = 3)
+
+```
+
+Replace height and weight in model by BMI ( = wt(kg) / sqrt( ht(m) ) )
+
+
+```{r}
+
+cystfibr2 <-
+  cystfibr %>%
+  mutate(bmi = weight / sqrt( height / 100))
+
+cystfibr3 <-
+  cystfibr2 %>%
+  select(-height, -weight)
+
+```
+
+
+
+```{r}
+
+pairs(cystfibr3, gap = 0)
+
+```
+
+
+
+```{r}
+
+cfib.lm2 <- lm(pemax ~ ., data = cystfibr3)
+
+summary(cfib.lm2)
+
+```
+
+```{r}
+
+vif(cfib.lm2)
+
+```
+
+P values are large, although global P value is small.
+
+<br>
+
+###  LASSO
+
+```{r}
+
+X <-
+  cystfibr3 %>%
+  select(-pemax)
+
+X <- as.matrix(X)
+
+cfib.cv <- cv.glmnet(X, cystfibr3$pemax)
+
+plot(cfib.cv)
+
+```
+
+```{r}
+
+cfib.las <- glmnet(X, cystfibr3$pemax, lambda = cfib.cv$lambda.min)
+
+cfib.las$beta
+
+```
+
+
+###  Cross-validation
+
+Leave-one-out
+
+
+```{r}
+
+##  Function to get predicted values
+##  See James et al., p. 249
+
+predict.regsubsets <- function(object, newdata, id,...){
+  form <- as.formula(object$call[[2]])
+  mat <- model.matrix(form, newdata)
+  coefi <- coef(object, id = id)
+  xvars <- names(coefi)
+  mat[ , xvars]%*%coefi
+}
+
+```
+
+
+```{r}
+
+
+##  Set no. of folds, k
+
+k <- 25
+
+#RNGversion(vstr = "4.0.2")
+#set.seed(1)
+
+######
+######  Run one of the next two lines of code only
+######
+
+##  Next line for leave-one-out cross validation
+folds <- sample(1:k, nrow(cystfibr3), replace = F)
+
+##  Next line for k-fold cross validation
+#folds <- sample(1:k, nrow(scapula_1), replace = T)
+
+
+folds
+
+table(folds)
+
+cv.errors <- matrix(NA , nrow = k, ncol = 8, 
+                    dimnames = list(NULL, paste(1:8)))
+
+for(j in 1:k){
+  best.fit <- regsubsets(pemax ~ ., data = cystfibr3[folds != j, ], 
+                         nvmax = 8)
+  
+  for(i in 1:8){
+    pred <- predict(best.fit, cystfibr3[folds == j, ], id = i)
+    cv.errors[j,  i] = mean((cystfibr3$pemax[folds == j] - pred)^2)
+  }
+}
+
+```
+
+```{r}
+
+mean.cv.errors <- apply(cv.errors, 2, mean, na.rm = T)
+mean.cv.errors
+
+which.min(mean.cv.errors)
+
+```
+
+
+
+```{r}
+
+plot(mean.cv.errors, type = "b")
+
+```
+
+Find best 3-predictor model using full data set
+
+```{r}
+
+
+reg.best <- regsubsets(pemax ~ ., data = cystfibr3, nvmax = 8)
+
+reg.best.ind <- which.min(mean.cv.errors)
+
+coef(reg.best, reg.best.ind)
+
+```
+
+```{r}
+
+cfib.lm3 <- lm(pemax ~ bmp + fev1 + bmi, data = cystfibr3)
+
+summary(cfib.lm3)
+
+```
+
+
+```{r}
+
+par(mfrow = c(2, 2))
+plot(cfib.lm3)
+par(mfrow = c(2, 2))
+
+```
+
+<br>
+
+### Stepwise
+
+
+```{r}
+
+step(cfib.lm2, direction = "both")
+
+```
+
+```{r}
+
+drop1(cfib.lm2, test = "F")   # So called 'type II' ANOVA
+
+```
+
+```{r}
+
+drop1(cfib.lm2, test = "Chisq")
+
+```
+
+
+<br>
+
+##  Sleep in mammals
+
+OzDASL
+
+http://www.statsci.org/data/general/sleep.html
+
+Response variable: the three sleep variables, total hours of sleep, dreaming sleep or non-dreaming sleep; or proportion of sleep spent dreaming
+
+
+
+```{r}
+
+sleep <- read.table(
+  file = "http://www.statsci.org/data/general/sleep.txt", 
+  sep = "", header = T)
+
+write.csv(sleep, "../data/sleep_mammals_OzDASL.csv", row.names = F)
+
+str(sleep)
+
+```
+
+
+```{r}
+
+sleep2 <- 
+  sleep %>%
+  select(-Species)
+
+pairs(sleep2, gap = 0)
+
+```
+
+
+
+Transformations
+
+```{r}
+
+sleep$logBodyWt <- log(sleep$BodyWt)
+
+sleep$logBrainWt <- log(sleep$BrainWt)
+
+```
+
+
+```{r}
+
+sleep2 <- 
+  sleep %>%
+  select(-Species, -BodyWt, -BrainWt, -NonDreaming, -Dreaming)
+
+pairs(sleep2, gap = 0)
+
+```
+
+
+```{r}
+
+sleep2 <- na.omit(sleep2)
+
+```
+
+
+
+```{r}
+
+sleep.lm1 <- lm(TotalSleep ~ ., data = sleep2)
+
+summary(sleep.lm1)
+
+```
+
+```{r}
+
+vif(sleep.lm1)
+
+```
+

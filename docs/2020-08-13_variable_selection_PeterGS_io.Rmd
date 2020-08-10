@@ -1,0 +1,78 @@
+---
+title: "Variable selection"
+author: "Peter Geelan-Small, Stats Central"
+date: "13/08/2020"
+output: 
+  ioslides_presentation:
+    css: slide.css
+---    
+
+
+```{r setup, include = F}
+
+library(knitr)
+
+knitr::opts_chunk$set(echo = F, warning = F, message = F, 
+                      fig.align = "center", fig.path = "figs/")
+
+##  Need this so tables are formatted nicely
+options("kableExtra.html.bsTable" = T)
+
+```
+
+
+## Statistical inference
+
+Are you:
+
+- looking at a focal predictor - e.g. is the coefficient of that predictor equal to zero?
+
+- predicting future values of response from predictors?
+
+- finding a plausible range of values for a parameter of interest?
+
+- finding which predictors are _active_ predictors?
+
+
+Variable or model selection is a type of inference
+
+
+## Types of regression models
+
+
+| Response  |  Predictors |
+|-----------|-------------|
+| Continuous, Binary/binomial, Discrete, Categorical  |  Continuous, Categorical -  Fixed or random effects |
+
+- Wide range of models
+
+- Focus here on models with continuous response
+
+- Variable selection approaches can be used across different types of models - with some restrictions and with more or less difficulty
+
+
+## Methods for model or variable selection
+
+Criteria used for deciding the fate of a variable
+
+- P value derived from some statistic ($t$, $F$, $\chi^2$)
+
+- measure of model fit - mean squared error (residual sum of squares)
+
+- information criterion (AIC, BIC)
+
+
+Methods
+
+- stepwise methods - forwards, backwards, both
+  - one variable added or removed at each step
+  - criterion for decision is P value or information criterion
+
+- validation methods
+  - randomly split data set into training and test sets
+  - all subsets combined with cross-validation
+
+- shrinkage methods - model coefficient estimates forced towards zero
+  - penalty term is based on magnitude of model coefficients
+  - LASSO
+

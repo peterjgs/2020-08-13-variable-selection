@@ -15,6 +15,15 @@ output:
     toc_depth: '4'
 ---
 
+
+<style>
+blockquote {
+  margin-left: 36px;
+  font-size:14px;
+}
+</style>
+
+
 ```{r setup, include = F}
 
 require(knitr)
@@ -494,6 +503,14 @@ p. 32 - direct quote
 p. 34
 
 Note explanation of _bias_ and _variance_ in context of modelling (or statistical learning).
+
+Variance is the amount by which estimated response values would change using different training data. See example in test.
+
+Bias is the error caused by approximating a possibly quite complex real-life system by a much simpler model.
+
+As the flexibility of a model increases, the variance increases and the bias decreases.
+
+
 
 
 
