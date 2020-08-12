@@ -9,7 +9,7 @@ output: html_notebook
 
 library(knitr)
 
-knitr::opts_chunk$set(echo = F, warning = F, message = F, 
+knitr::opts_chunk$set(echo = T, warning = F, message = F, 
                       fig.align = "center", fig.path = "figs/")
 
 ##  Need this so tables are formatted nicely
@@ -52,6 +52,7 @@ pemax: a numeric vector, maximum expiratory pressure
 
 ```{r}
 
+data(cystfibr)
 str(cystfibr)
 
 ```
@@ -60,10 +61,17 @@ str(cystfibr)
 
 ```{r}
 
-ggpairs(cystfibr, upper = "blank", diag = "blank")
+ggpairs(cystfibr, upper = "blank")
 
 ```
 
+
+```{r}
+
+ggplot(cystfibr, aes(x = "", y = rv)) +
+  geom_boxplot(width = 0.3)
+
+```
 
 
 ```{r}
@@ -72,16 +80,30 @@ pairs(cystfibr, gap = 0)
 
 ```
 
+
+```{r}
+
+ggplot(cystfibr, aes(x = bmp, y = pemax, colour = as.factor(sex))) +
+  geom_jitter()
+  
+```
+
 Full model
 
 
 
 ```{r}
 
-
 cfib.lm1 <- lm(pemax ~ ., data = cystfibr)
 
 summary(cfib.lm1)
+
+```
+
+
+```{r}
+
+anova(cfib.lm1)
 
 ```
 
@@ -111,46 +133,12 @@ round(cor(cystfibr), digits = 3)
 
 ```
 
-Replace height and weight in model by BMI ( = wt(kg) / sqrt( ht(m) ) )
-
 
 ```{r}
 
-cystfibr2 <-
-  cystfibr %>%
-  mutate(bmi = weight / sqrt( height / 100))
-
-cystfibr3 <-
-  cystfibr2 %>%
-  select(-height, -weight)
+cor.test(cystfibr$bmp, cystfibr$pemax)
 
 ```
-
-
-
-```{r}
-
-pairs(cystfibr3, gap = 0)
-
-```
-
-
-
-```{r}
-
-cfib.lm2 <- lm(pemax ~ ., data = cystfibr3)
-
-summary(cfib.lm2)
-
-```
-
-```{r}
-
-vif(cfib.lm2)
-
-```
-
-P values are large, although global P value is small.
 
 <br>
 
@@ -159,12 +147,12 @@ P values are large, although global P value is small.
 ```{r}
 
 X <-
-  cystfibr3 %>%
+  cystfibr %>%
   select(-pemax)
 
 X <- as.matrix(X)
 
-cfib.cv <- cv.glmnet(X, cystfibr3$pemax)
+cfib.cv <- cv.glmnet(X, cystfibr$pemax)
 
 plot(cfib.cv)
 
@@ -172,7 +160,7 @@ plot(cfib.cv)
 
 ```{r}
 
-cfib.las <- glmnet(X, cystfibr3$pemax, lambda = cfib.cv$lambda.min)
+cfib.las <- glmnet(X, cystfibr$pemax, lambda = cfib.cv$lambda.min)
 
 cfib.las$beta
 
@@ -215,6 +203,314 @@ k <- 25
 ######
 
 ##  Next line for leave-one-out cross validation
+folds <- sample(1:k, nrow(cystfibr), replace = F)
+
+##  Next line for k-fold cross validation
+#folds <- sample(1:k, nrow(cystfibr), replace = T)
+
+
+folds
+
+table(folds)
+
+cv.errors <- matrix(NA , nrow = k, ncol = 9, 
+                    dimnames = list(NULL, paste(1:9)))
+
+for(j in 1:k){
+  best.fit <- regsubsets(pemax ~ ., data = cystfibr[folds != j, ], 
+                         nvmax = 9)
+  
+  for(i in 1:9){
+    pred <- predict(best.fit, cystfibr[folds == j, ], id = i)
+    cv.errors[j,  i] = mean((cystfibr$pemax[folds == j] - pred)^2)
+  }
+}
+
+```
+
+
+
+```{r}
+
+mean.cv.errors <- apply(cv.errors, 2, mean, na.rm = T)
+mean.cv.errors
+
+which.min(mean.cv.errors)
+
+```
+
+
+
+```{r}
+
+plot(mean.cv.errors, type = "b")
+
+```
+
+Find best 3-predictor model using full data set
+
+```{r}
+
+reg.best <- regsubsets(pemax ~ ., data = cystfibr, nvmax = 9)
+
+reg.best.ind <- which.min(mean.cv.errors)
+
+coef(reg.best, reg.best.ind)
+
+```
+
+
+Four predictor model
+
+```{r}
+
+coef(reg.best, 4)
+
+```
+
+```{r}
+
+cfib.lm2 <- lm(pemax ~ weight + bmp + fev1, data = cystfibr)
+
+summary(cfib.lm2)
+
+```
+
+```{r}
+
+vif(cfib.lm2)
+
+```
+
+
+```{r}
+
+par(mfrow = c(2, 2))
+plot(cfib.lm2)
+par(mfrow = c(2, 2))
+
+```
+
+<br>
+
+### Stepwise
+
+
+```{r}
+
+step(cfib.lm1, direction = "both")
+
+```
+
+```{r}
+
+drop1(cfib.lm1, test = "F")   # So called 'type II' ANOVA
+
+```
+
+```{r}
+
+drop1(cfib.lm1, test = "Chisq")
+
+```
+
+<br>
+
+## Analysis approach: discipline expert in control
+
+Controlling model selection manually allows researcher to exert some logical control over the process (Dalgaard, ISwR, p. 190).
+
+Remove the four lung function variables: tlc, frc, rv, fev1
+
+Using Harrell's recommendation, it might be better to do this in one step using the AIC. 
+
+Approach below should probably be done using AIC.
+
+
+Full model
+
+
+```{r}
+
+cfib.lm1 <- lm(pemax ~ ., data = cystfibr)
+
+summary(cfib.lm1)
+
+```
+
+### Remove other lung function indicators first
+
+```{r}
+
+cfib.lm1a <- update(cfib.lm1, . ~ . - tlc)
+
+summary(cfib.lm1a)
+
+```
+
+```{r}
+
+cfib.lm1b <- update(cfib.lm1a, . ~ . - frc)
+
+summary(cfib.lm1b)
+
+```
+
+
+```{r}
+
+cfib.lm1c <- update(cfib.lm1b, . ~ . - rv)
+
+summary(cfib.lm1c)
+
+```
+
+```{r}
+
+cfib.lm1d <- update(cfib.lm1c, . ~ . - fev1)
+
+summary(cfib.lm1d)
+
+```
+
+Next, focus on reducing variables related to patients' physical size. Do not remove weight and bmp because of small p values.
+
+```{r}
+
+cfib.lm1e <- update(cfib.lm1d, . ~ . - sex)
+
+summary(cfib.lm1e)
+
+```
+
+
+
+```{r}
+
+cfib.lm1f <- update(cfib.lm1e, . ~ . - age)
+
+summary(cfib.lm1f)
+
+```
+
+
+```{r}
+
+cfib.lm1g <- update(cfib.lm1f, . ~ . - height)
+
+summary(cfib.lm1g)
+
+```
+
+### Removing blocks of variables
+
+```{r}
+
+cfib.lm11 <- update(cfib.lm1, . ~ . - fev1 - rv - frc - tlc)
+
+c(AIC(cfib.lm1), AIC(cfib.lm11))
+
+```
+
+
+```{r}
+
+summary(cfib.lm11)
+
+```
+
+<br>
+
+###  Replace height and weight with BMI
+
+One possibility is to replace height and weight in model by BMI ( = wt(kg) / sqrt( ht(m) ) ), although original researchers did not do this.
+
+
+```{r}
+
+cystfibr2 <-
+  cystfibr %>%
+  mutate(bmi = weight / sqrt( height / 100))
+
+cystfibr3 <-
+  cystfibr2 %>%
+  select(-height, -weight)
+
+```
+
+
+
+```{r}
+
+pairs(cystfibr3, gap = 0)
+
+```
+
+
+
+```{r}
+
+cfib.lm20 <- lm(pemax ~ ., data = cystfibr3)
+
+summary(cfib.lm20)
+
+```
+
+P values are large, although global P value is small.
+
+
+```{r}
+
+vif(cfib.lm20)
+
+```
+
+LASSO with bmi.
+
+###  LASSO
+
+```{r}
+
+X <-
+  cystfibr3 %>%
+  select(-pemax)
+
+X <- as.matrix(X)
+
+cfib.cv20 <- cv.glmnet(X, cystfibr3$pemax)
+
+plot(cfib.cv20)
+
+```
+
+
+
+```{r}
+
+cfib.las20 <- glmnet(X, cystfibr3$pemax, lambda = cfib.cv20$lambda.min)
+
+cfib.las20$beta
+
+```
+
+
+
+Cross-validation on data with bmi.
+
+```{r}
+
+##  Set no. of folds, k
+
+k <- 25
+
+#RNGversion(vstr = "4.0.2")
+#set.seed(1)
+
+######
+######  Run one of the next two lines of code only
+######
+
+##  Next line for leave-one-out cross validation
 folds <- sample(1:k, nrow(cystfibr3), replace = F)
 
 ##  Next line for k-fold cross validation
@@ -240,6 +536,8 @@ for(j in 1:k){
 
 ```
 
+
+
 ```{r}
 
 mean.cv.errors <- apply(cv.errors, 2, mean, na.rm = T)
@@ -261,7 +559,6 @@ Find best 3-predictor model using full data set
 
 ```{r}
 
-
 reg.best <- regsubsets(pemax ~ ., data = cystfibr3, nvmax = 8)
 
 reg.best.ind <- which.min(mean.cv.errors)
@@ -270,48 +567,16 @@ coef(reg.best, reg.best.ind)
 
 ```
 
-```{r}
-
-cfib.lm3 <- lm(pemax ~ bmp + fev1 + bmi, data = cystfibr3)
-
-summary(cfib.lm3)
-
-```
-
 
 ```{r}
 
-par(mfrow = c(2, 2))
-plot(cfib.lm3)
-par(mfrow = c(2, 2))
-
-```
-
-<br>
-
-### Stepwise
-
-
-```{r}
-
-step(cfib.lm2, direction = "both")
-
-```
-
-```{r}
-
-drop1(cfib.lm2, test = "F")   # So called 'type II' ANOVA
-
-```
-
-```{r}
-
-drop1(cfib.lm2, test = "Chisq")
 
 ```
 
 
 <br>
+
+******
 
 ##  Sleep in mammals
 

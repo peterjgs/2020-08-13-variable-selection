@@ -8,6 +8,49 @@ output:
 ---    
 
 
+<style type="text/css">
+
+body p {
+  color: #000000;
+}
+
+ul { 
+  display: block;
+  color: #000000;
+}
+
+</style>
+
+<style>
+div.footnotes {
+  position: absolute;
+  bottom: 0;
+  margin-bottom: 10px;
+  width: 80%;
+  font-size: 0.6em;
+}
+</style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    $('slide:not(.backdrop):not(.title-slide)').append('<div class=\"footnotes\">');
+
+    $('footnote').each(function(index) {
+      var text  = $(this).html();
+      var fnNum = (index+1).toString().sup();
+      $(this).html(text + fnNum);
+
+      var footnote   = fnNum + ': ' + $(this).attr('content') + '<br/>';
+      var oldContent = $(this).parents('slide').children('div.footnotes').html();
+      var newContent = oldContent + footnote;
+      $(this).parents('slide').children('div.footnotes').html(newContent);
+    });
+  });
+</script>
+
+
 ```{r setup, include = F}
 
 library(knitr)
@@ -21,58 +64,654 @@ options("kableExtra.html.bsTable" = T)
 ```
 
 
+```{r message = F}
+
+library(ISwR)
+library(RcmdrMisc)
+library(ggplot2)
+library(tidyverse)
+library(GGally)
+library(car)
+library(glmnet)
+library(leaps)
+
+```
+
+
 ## Statistical inference
 
-Are you:
+Types of statistical inference:
 
 - looking at a focal predictor - e.g. is the coefficient of that predictor equal to zero?
 
-- predicting future values of response from predictors?
+- predicting future values of response from predictors
 
-- finding a plausible range of values for a parameter of interest?
+- finding a plausible range of values for a parameter of interest
 
-- finding which predictors are _active_ predictors?
+- finding which predictors are _active_ predictors
 
 
 Variable or model selection is a type of inference
 
 
-## Types of regression models
+##  Example: Respiratory muscle strength in cystic fibrosis
+
+Measurements of a number of clinical variables were taken on 25 patients with cystic fibrosis aged from 7 to 23 years. The response variable is maximum expiratory pressure (`pemax`).<footnote content = "Dalgaard 2008, Introductory Statistics with R, Springer; O’Neill et al. 1983,  Am. Rev. Respir. Dis., 128:1051–1054."></footnote>
+
+- What variables are useful predictors of `pemax`?
+
+- What is a useful prediction model for `pemax`?
+
+<br>
+
+_Response_ 
+
+- `pemax`:  maximum expiratory pressure
+
+(decrease is an index of malnutrition effect on pressures)
 
 
-| Response  |  Predictors |
-|-----------|-------------|
-| Continuous, Binary/binomial, Discrete, Categorical  |  Continuous, Categorical -  Fixed or random effects |
+##  Example: Cystic fibrosis
 
-- Wide range of models
+- `age`: age (yr)
+- `sex`:  coded 0: male, 1:female
+- `height`: height (cm)
+- `weight`: weight (kg)
+- `bmp`: body mass (% of normal)
 
-- Focus here on models with continuous response
+_Lung function indicators_
 
-- Variable selection approaches can be used across different types of models - with some restrictions and with more or less difficulty
+- `fev1`: forced expiratory volume
+- `rv`:  residual volume
+- `frc`: functional residual capacity
+- `tlc`: total lung capacity
+
+<div class="notes">
+
+Note: BMP = Wt/(Ht)^2 as percentage of age-specific median for normal individuals
+
+</div>
+
+##  Example: Cystic fibrosis - variables
+
+```{r}
+
+data(cystfibr)
+str(cystfibr)
+
+```
 
 
-## Methods for model or variable selection
+##  Example: Cystic fibrosis - all pairs plot
 
-Criteria used for deciding the fate of a variable
+```{r}
 
-- P value derived from some statistic ($t$, $F$, $\chi^2$)
+pairs(cystfibr, gap = 0)
 
-- measure of model fit - mean squared error (residual sum of squares)
-
-- information criterion (AIC, BIC)
+```
 
 
-Methods
+##  Example: Cystic fibrosis - summary statistics
 
-- stepwise methods - forwards, backwards, both
+
+```{r}
+
+numSummary(cystfibr, 
+           statistics = c("mean", "sd", "median", "quantiles", "IQR"),
+           quantiles = c(0.5))
+
+```
+
+##  Example: Cystic fibrosis - correlations
+
+
+```{r}
+
+round(cor(cystfibr), digits = 2)
+
+```
+
+
+##  Example: Cystic fibrosis - regression model
+
+Model: multivariable linear regression 
+
+
+```{r results = "hide"}
+
+cfib.lm1 <- lm(pemax ~ ., data = cystfibr)
+
+summary(cfib.lm1)
+
+```
+
+
+```{r}
+
+round(summary(cfib.lm1)$coef, digits = 4)
+
+f_obs <- summary(cfib.lm1)$fstat
+
+adjR2 <- round(summary(cfib.lm1)$adj.r.squared, digits = 4)
+
+p_global <- round(1 - pf(f_obs[1], f_obs[2], f_obs[3]), digits = 4)
+
+print(paste("Adjusted R-sq =", adjR2, "      p value =", p_global),
+      quote = F)
+
+```
+
+##  Example: Cystic fibrosis - collinearity
+
+
+Global P value small, no P values for model coefficients small?
+
+Correlations among variables are interfering with estimated standard errors - _collinearity_
+
+Check via _variance inflation factor_
+
+```{r}
+
+round(vif(cfib.lm1), digits = 3)
+
+```
+
+
+Values of VIF > 10 show concerning collinearity
+
+VIF values show why individual P values are not smaller
+
+
+##  Example: Cystic fibrosis - model assumptions
+
+Check model assumptions
+
+```{r}
+
+par(mfrow = c(1, 2))
+plot(rstandard(cfib.lm1) ~ fitted(cfib.lm1))
+abline(h = 0, lty = 2)
+qqPlot(residuals(cfib.lm1))
+par(mfrow = c(1, 1))
+
+```
+
+
+
+## Model or variable selection - criteria and methods
+
+Criteria used (well or not!) for deciding the fate of a variable:
+
+- P value derived from some statistic ($t$, $\;F$, $\;\chi^2$)
+
+- measure of model fit - mean squared error (residual mean square), adjusted $R^2$
+
+- information criterion - AIC, BIC (combination of measure of model fit and penalty for larger model)
+
+
+For all of these, smaller is better
+
+
+## Model or variable selection - criteria and methods
+
+
+**Methods**
+
+- stepwise methods - forwards, backwards, both (1960)
   - one variable added or removed at each step
-  - criterion for decision is P value or information criterion
 
 - validation methods
+  - measure how well models predict using new data (1990s)
   - randomly split data set into training and test sets
-  - all subsets combined with cross-validation
+  - all subsets combined with k-fold cross-validation
 
-- shrinkage methods - model coefficient estimates forced towards zero
+- penalised estimation methods - model coefficient estimates forced towards zero
   - penalty term is based on magnitude of model coefficients
-  - LASSO
+  - LASSO (1996)
+
+
+## Model or variable selection - criteria and methods
+
+Use expert knowledge first to _simplify_ your model
+
+- eliminate unnecessary predictors
+
+
+Stepwise methods
+
+- no statistical justification but if you must ...
+- do not use P values for decisions 
+  - hypothesis testing not appropriate for model selection as no a priori hypothesis is tested 
+  - multiple testing problems
+- use information criterion (AIC, BIC)
+
+
+
+## Model or variable selection - criteria and methods
+
+Validation methods
+
+- common criterion is mean squared error
+- good for comparing predictive capability of models and so model selection
+- choose appropriate "k" for k-fold cross-validation - one recommendation:
+  - leave-one-out (i.e. N-fold c.v.) if n < 20
+  - 10-fold c.v. for 20<n<100
+  - 5-fold c.v. for n>100
+
+
+Penalised estimation methods
+
+- main goal is predictive capability of model
+- good when many parameters or small sample
+
+
+## Model or variable selection - criteria and methods
+
+Each method also has its _limitations_ and _disadvantages_
+
+- Stepwise methods can be undermined by collinearity
+- AIC and BIC rely on model being close to correct
+- Cross-validation requires only independent splits for training and test data but different results for different "k"
+- LASSO estimates are biased and no standard errors are available
+
+
+
+
+##  Example: Cystic fibrosis - active predictors
+
+- What variables are useful predictors of `pemax`?
+
+LASSO
+
+```{r}
+
+X <-
+  cystfibr %>%
+  select(-pemax)
+
+X <- as.matrix(X)
+
+cfib.cv <- cv.glmnet(X, cystfibr$pemax)
+
+plot(cfib.cv)
+
+```
+
+##  Example: Cystic fibrosis - active predictors
+
+```{r}
+
+cfib.las <- glmnet(X, cystfibr$pemax, lambda = cfib.cv$lambda.min)
+
+cfib.las$beta
+
+```
+
+Available output:
+
+- active predictors and model coefficients
+- no P values
+- no standard errors
+
+
+
+##  Example: Cystic fibrosis - prediction model
+
+- What is a useful prediction model for `pemax`?
+
+k-fold cross validation (k = 1, leave-one-out) with all subsets in each fold
+
+
+```{r}
+
+##  Function to get predicted values
+##  See James et al., p. 249
+
+predict.regsubsets <- function(object, newdata, id,...){
+  form <- as.formula(object$call[[2]])
+  mat <- model.matrix(form, newdata)
+  coefi <- coef(object, id = id)
+  xvars <- names(coefi)
+  mat[ , xvars]%*%coefi
+}
+
+```
+
+
+
+```{r}
+
+##  Set no. of folds, k
+
+k <- 25
+
+#RNGversion(vstr = "4.0.2")
+#set.seed(1)
+
+######
+######  Run one of the next two lines of code only
+######
+
+##  Next line for leave-one-out cross validation
+folds <- sample(1:k, nrow(cystfibr), replace = F)
+
+##  Next line for k-fold cross validation
+#folds <- sample(1:k, nrow(cystfibr), replace = T)
+
+
+#folds
+
+table(folds)
+
+cv.errors <- matrix(NA , nrow = k, ncol = 9, 
+                    dimnames = list(NULL, paste(1:9)))
+
+for(j in 1:k){
+  best.fit <- regsubsets(pemax ~ ., data = cystfibr[folds != j, ], 
+                         nvmax = 9)
+  #print(coef(best.fit, 3))
+  for(i in 1:9){
+    pred <- predict(best.fit, cystfibr[folds == j, ], id = i)
+    cv.errors[j,  i] = mean((cystfibr$pemax[folds == j] - pred)^2)
+  }
+}
+
+```
+
+
+
+```{r}
+
+mean.cv.errors <- apply(cv.errors, 2, mean, na.rm = T)
+
+mean.cv.errors
+
+```
+
+```{r}
+
+print(paste("No. of predictors in final model =", which.min(mean.cv.errors), quote = F))
+
+```
+
+
+##  Example: Cystic fibrosis - prediction model
+
+
+```{r}
+
+plot(mean.cv.errors, type = "b")
+
+```
+
+
+##  Example: Cystic fibrosis - prediction model
+
+
+```{r}
+
+reg.best <- regsubsets(pemax ~ ., data = cystfibr, nvmax = 9)
+
+reg.best.ind <- which.min(mean.cv.errors)
+
+coef(reg.best, reg.best.ind)
+
+```
+
+
+Look at terms in 4-predictor model from c.v. runs
+
+```{r}
+
+coef(reg.best, 4)
+
+```
+
+
+Strange:
+
+- both weight and bmp are in model when cor(weight, bmp) = 0.67
+
+- coef of bmp is negative when cor(pemax, bmp) = 0.23
+
+Possible overfitting?
+
+
+<div class="notes">
+
+Note: BMP = Wt/(Ht)^2 as percentage of age-specific median for normal individuals
+
+cor(weight, bmp) = 0.67
+
+cor(pemax, bmp) = 0.23
+
+Strange both weight and bmp are in model and that coef of bmp is negative (despite weak +ve correlation between pemax and bmp)
+
+</div>
+
+
+##  Example: Cystic fibrosis - prediction model
+
+Optimal model from cross-validation with all subsets fitted on full data set
+
+```{r}
+
+cfib.lm.cv3 <- lm(pemax ~ weight + bmp + fev1, data = cystfibr)
+
+round(summary(cfib.lm.cv3)$coef, digits = 4)
+
+f_obs <- summary(cfib.lm.cv3)$fstat
+
+adjR2 <- round(summary(cfib.lm.cv3)$adj.r.squared, digits = 4)
+
+p_global <- round(1 - pf(f_obs[1], f_obs[2], f_obs[3]), digits = 4)
+
+print(paste("Adjusted R-sq =", adjR2, "      p value =", p_global),
+      quote = F)
+
+```
+
+
+##  Example: Cystic fibrosis - prediction model
+
+For prediction models:
+
+- some overfitting is not a problem
+
+- some collinearity is not a problem
+
+
+##  Example: Cystic fibrosis - active predictors
+
+Simplify the model
+
+- use logic from expert knowledge - consider groups of predictors
+
+Lung function: `fev1`, `rv`, `frc`, `tlc`
+
+Remove these other lung function indicators as a group
+
+Model comparison criteria:
+
+- AIC - overfits, better for prediction model
+
+- BIC - penalises larger models harder, good for active predictors
+
+- As models are _nested_, can use an $F$ test
+
+
+
+##  Example: Cystic fibrosis - active predictors
+
+Simplify the model contd
+
+```{r}
+
+cfib.lm.noLung <- update(cfib.lm1, . ~ . - fev1 - rv - frc - tlc)
+
+AIC_f <- round(AIC(cfib.lm1), digits = 2)
+
+AIC_r <- round(AIC(cfib.lm.noLung), digits = 2)
+
+print(paste("AIC full model:", AIC_f), quote = F)
+
+print(paste("AIC reduced model:", AIC_r), quote = F)
+
+print(paste("AIC_full - AIC_red =", round(AIC_f - AIC_r, digits = 2)), 
+      quote = F)
+
+```
+
+
+```{r}
+
+cfib.lm.noLung <- update(cfib.lm1, . ~ . - fev1 - rv - frc - tlc)
+
+BIC_f <- round(BIC(cfib.lm1), digits = 2)
+
+BIC_r <- round(BIC(cfib.lm.noLung), digits = 2)
+
+print(paste("BIC full model:", BIC_f), quote = F)
+
+print(paste("BIC reduced model:", BIC_r), quote = F)
+
+print(paste("BIC_full - BIC_red =", round(BIC_f - BIC_r, digits = 2)), 
+      quote = F)
+
+```
+
+Model without lung function variables appears better
+
+
+##  Example: Cystic fibrosis - active predictors
+
+Simplify the model contd
+
+
+$F$ test for nested models
+
+```{r}
+
+anova(cfib.lm1, cfib.lm.noLung, test = "F")
+
+```
+
+Smaller model is no worse than larger model
+
+
+##  Example: Cystic fibrosis - active predictors
+
+
+```{r}
+
+round(summary(cfib.lm.noLung)$coef, digits = 4)
+
+f_obs <- summary(cfib.lm.noLung)$fstat
+
+adjR2 <- round(summary(cfib.lm.noLung)$adj.r.squared, digits = 4)
+
+p_global <- round(1 - pf(f_obs[1], f_obs[2], f_obs[3]), digits = 4)
+
+print(paste("Adjusted R-sq =", adjR2, "      p value =", p_global),
+      quote = F)
+
+```
+
+Collinearity still present - possibly obscuring relationships
+
+```{r}
+
+vif(cfib.lm.noLung)
+
+```
+
+
+##  Example: Cystic fibrosis - active predictors
+
+Simplify the model contd
+
+Remove `age`
+
+```{r}
+
+cfib.lm.noLung2 <- update(cfib.lm.noLung, . ~ . - age)
+
+round(summary(cfib.lm.noLung2)$coef, digits = 4)
+
+f_obs <- summary(cfib.lm.noLung2)$fstat
+
+adjR2 <- round(summary(cfib.lm.noLung2)$adj.r.squared, digits = 4)
+
+p_global <- round(1 - pf(f_obs[1], f_obs[2], f_obs[3]), digits = 4)
+
+print(paste("Adjusted R-sq =", adjR2, "      p value =", p_global),
+      quote = F)
+
+```
+
+Collinearity still present
+
+```{r}
+
+vif(cfib.lm.noLung2)
+
+```
+
+
+##  Example: Cystic fibrosis - active predictors
+
+Perhaps no neat ending here in specifying active predictors
+
+cor(height, weight) = 0.92 so possibly one should have been removed at the start
+
+<br>
+
+Different methods may lead to different results
+
+
+##  Variable selection - Recommendations
+
+- In study design, use expert knowledge to list candidate predictors (do not use the data later to "help" you!) and plan to collect adequate data 
+
+- Avoid including too many predictors for your sample size
+
+- Ask yourself whether variable selection is _necessary_; if so
+
+  - do it in a limited, structured way (e.g. consider groups of predictor variables)
+  
+  - use _minimal_ backwards elimination steps if you want parsimony (active predictors) rather than accuracy (good predictions) and use model validation techniques<footnote content = "Harrell 2015, Regression Modeling Strategies, Springer, 2nd ed., s. 4.12"></footnote>
+
+
+##  Variable selection - Recommendations
+
+  
+- What is the role of modelling in your field?  
+
+  - systems biology - complex problems addressed by computational modelling and simulation<footnote content = "Macleod 2018 https://doi.org/10.1007/s40656-017-0183-9"></footnote>
+  
+  - business - big data - Netflix Prize (100 million records)<footnote content = "Hastie 2015 Statistical learning with big data https://web.stanford.edu/~hastie/TALKS/SLBD_new.pdf"></footnote>
+  
+  - clinical science and health - diagnostic and prognostic inferences ... for care decisions ... policy<footnote content = "Henley 2020 https://doi.org/10.1080/24709360.2019.1618653"></footnote>
+  
+  - more generally - how statistical modelling decisions connect with answering scientific questions<footnote content = "Navarro 2019 https://doi.org/10.1007/s42113-018-0019-z"></footnote>
+  
+  
+
+##  Variable selection - future seminar topics?
+
+Many issues not raised:
+
+- how many variables is it feasible to start with in a model?
+
+- after you've done model selection, how much can you trust P values for model parameter estimates?
+
+- what methods can be used for models with multiple categorical predictor variables?
+
+- what about mixed models with fixed and random effects - i.e. where the data records are not independent, such as observations made on subjects in different groups?
+
+- what methods can be used with other types of model - e.g. non-linear models or where response variable is binary, small count, categorical, ...?
+
+
+
+
 
