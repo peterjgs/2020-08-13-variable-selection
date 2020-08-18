@@ -60,6 +60,7 @@
 
     <style type="text/css">code{white-space: pre;}</style>
 
+    <link rel="stylesheet" href="revealjs_styles2.css"/>
 
 <!-- Printing and PDF exports -->
 <script id="paper-css" type="application/dynamic-css">
@@ -455,60 +456,450 @@ document.getElementsByTagName('head')[0].appendChild(style);
     <h3 class="date">13/08/2020</h3>
 </section>
 
-<section class="slide level2">
-
-<style type="text/css">
-
-.reveal p:first-child { 
-  margin-top: 0px;    
-}
-.reveal .slides > section {
-  padding: 0px; 
-}
-.reveal div.slides {
-  position: absolute; top: -15%; 
-}
-
-.reveal {
-    font-size: 30pt;
-}
-
-.reveal h1,
-.reveal h2,
-.reveal h3,
-.reveal h4,
-.reveal h5,
-.reveal h6 {
-  margin: $headingMargin;
-  color: #963216;
-}
-
-.header {
-  padding: 50px;
-}
-
-.reveal p {
-  text-align: left;
-}
-
-.reveal ul {
-  display: block;
-}
-
-.reveal ol {
-  display: block;
-}  
-
-</style>
-</section>
-<section id="variable-or-model-selection" class="title-slide slide level1">
-<h1>Variable or model selection</h1>
-<p>Why are you modelling?</p>
+<section id="statistical-inference---main-types-of-inference" class="slide level2">
+<h2>Statistical inference - main types of inference</h2>
 <ul>
-<li><p>looking at a focal predictor</p></li>
-<li><p>finding which predictors are <em>active</em> predictors</p></li>
-<li><p>predicting value of response from predictors</p></li>
+<li><p>Parameter estimation - finding a plausible range of values for a parameter of interest - e.g. coefficient of a particular predictor</p></li>
+<li><p>Hypothesis testing - looking at the effect of a focal predictor - testing if the coefficient of the predictor is zero</p></li>
+<li><p>Predicting future values of the response from predictors</p></li>
+<li><p>Finding which predictors are associated with the response - <em>active</em> predictors versus <em>inactive</em> predictors</p></li>
 </ul>
+<p>A good predictive model aids parameter estimation and hypothesis testing</p>
+<p>Variable selection is a type of inference - one of many methods in general area of model selection</p>
+</section>
+<section id="example-respiratory-muscle-strength-in-cystic-fibrosis" class="slide level2">
+<h2>Example: Respiratory muscle strength in cystic fibrosis</h2>
+<p><br></p>
+<p>Measurements of a number of clinical variables were taken on 25 patients with cystic fibrosis aged from 7 to 23 years. The response variable is maximum expiratory pressure (<code>pemax</code>).<footnote content = "Dalgaard 2008, Introductory Statistics with R, Springer; O’Neill et al. 1983,  Am. Rev. Respir. Dis., 128:1051–1054."></footnote></p>
+<ul>
+<li><p>What variables are associated with (active predictors of) <code>pemax</code>?</p></li>
+<li><p>What is a useful prediction model for <code>pemax</code>?</p></li>
+</ul>
+<p><br></p>
+<p><em>Response</em></p>
+<ul>
+<li><code>pemax</code>: maximum expiratory pressure</li>
+</ul>
+</section>
+<section id="example-cystic-fibrosis" class="slide level2">
+<h2>Example: Cystic fibrosis</h2>
+<ul>
+<li><code>age</code>: age (yr)</li>
+<li><code>sex</code>: coded 0: male, 1:female</li>
+<li><code>height</code>: height (cm)</li>
+<li><code>weight</code>: weight (kg)</li>
+<li><code>bmp</code>: body mass pc. (% of normal) - indicator of malnutrition</li>
+</ul>
+<p><em>Lung function indicators</em></p>
+<ul>
+<li><code>fev1</code>: forced expiratory volume</li>
+<li><code>rv</code>: residual volume</li>
+<li><code>frc</code>: functional residual capacity</li>
+<li><code>tlc</code>: total lung capacity</li>
+</ul>
+<aside class="notes">
+<p>Note: BMP = Wt/(Ht)^2 as percentage of age-specific median for normal individuals</p>
+</aside>
+</section>
+<section id="example-cystic-fibrosis---variables" class="slide level2">
+<h2>Example: Cystic fibrosis - variables</h2>
+<pre><code>## &#39;data.frame&#39;:    25 obs. of  10 variables:
+##  $ age   : int  7 7 8 8 8 9 11 12 12 13 ...
+##  $ sex   : int  0 1 0 1 0 0 1 1 0 1 ...
+##  $ height: int  109 112 124 125 127 130 139 150 146 155 ...
+##  $ weight: num  13.1 12.9 14.1 16.2 21.5 17.5 30.7 28.4 25.1 31.5 ...
+##  $ bmp   : int  68 65 64 67 93 68 89 69 67 68 ...
+##  $ fev1  : int  32 19 22 41 52 44 28 18 24 23 ...
+##  $ rv    : int  258 449 441 234 202 308 305 369 312 413 ...
+##  $ frc   : int  183 245 268 146 131 155 179 198 194 225 ...
+##  $ tlc   : int  137 134 147 124 104 118 119 103 128 136 ...
+##  $ pemax : int  95 85 100 85 95 80 65 110 70 95 ...</code></pre>
+</section>
+<section id="example-cystic-fibrosis---all-pairs-plot" class="slide level2">
+<h2>Example: Cystic fibrosis - all pairs plot</h2>
+<p><img src="figs/unnamed-chunk-3-1.png" style="display: block; margin: auto;" /></p>
+</section>
+<section id="example-cystic-fibrosis---summary-statistics" class="slide level2">
+<h2>Example: Cystic fibrosis - summary statistics</h2>
+<pre><code>##           mean         sd IQR   50%  n
+## age     14.480  5.0589854   6  14.0 25
+## sex      0.440  0.5066228   1   0.0 25
+## height 152.800 21.5000000  35 156.0 25
+## weight  38.404 17.8981256  26  37.2 25
+## bmp     78.280 12.0052766  22  71.0 25
+## fev1    34.720 11.1971723  18  33.0 25
+## rv     255.200 86.0169557 117 225.0 25
+## frc    155.400 43.7187984  56 139.0 25
+## tlc    114.000 16.9681073  27 113.0 25
+## pemax  109.120 33.4369058  45  95.0 25</code></pre>
+</section>
+<section id="example-cystic-fibrosis---correlations" class="slide level2">
+<h2>Example: Cystic fibrosis - correlations</h2>
+<pre><code>##          age   sex height weight   bmp  fev1    rv   frc   tlc pemax
+## age     1.00 -0.17   0.93   0.91  0.38  0.29 -0.55 -0.64 -0.47  0.61
+## sex    -0.17  1.00  -0.17  -0.19 -0.14 -0.53  0.27  0.18  0.02 -0.29
+## height  0.93 -0.17   1.00   0.92  0.44  0.32 -0.57 -0.62 -0.46  0.60
+## weight  0.91 -0.19   0.92   1.00  0.67  0.45 -0.62 -0.62 -0.42  0.64
+## bmp     0.38 -0.14   0.44   0.67  1.00  0.55 -0.58 -0.43 -0.36  0.23
+## fev1    0.29 -0.53   0.32   0.45  0.55  1.00 -0.67 -0.67 -0.44  0.45
+## rv     -0.55  0.27  -0.57  -0.62 -0.58 -0.67  1.00  0.91  0.59 -0.32
+## frc    -0.64  0.18  -0.62  -0.62 -0.43 -0.67  0.91  1.00  0.70 -0.42
+## tlc    -0.47  0.02  -0.46  -0.42 -0.36 -0.44  0.59  0.70  1.00 -0.18
+## pemax   0.61 -0.29   0.60   0.64  0.23  0.45 -0.32 -0.42 -0.18  1.00</code></pre>
+</section>
+<section id="example-cystic-fibrosis---regression-model" class="slide level2">
+<h2>Example: Cystic fibrosis - regression model</h2>
+<p>Model: multivariable linear regression</p>
+<pre><code>##             Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 176.0582   225.8912  0.7794   0.4479
+## age          -2.5420     4.8017 -0.5294   0.6043
+## sex          -3.7368    15.4598 -0.2417   0.8123
+## height       -0.4463     0.9034 -0.4940   0.6285
+## weight        2.9928     2.0080  1.4905   0.1568
+## bmp          -1.7449     1.1552 -1.5105   0.1517
+## fev1          1.0807     1.0809  0.9998   0.3333
+## rv            0.1970     0.1962  1.0039   0.3314
+## frc          -0.3084     0.4924 -0.6264   0.5405
+## tlc           0.1886     0.4997  0.3774   0.7112</code></pre>
+<pre><code>## [1] Adjusted R-sq = 0.4197       p value = 0.032</code></pre>
+</section>
+<section id="example-cystic-fibrosis---collinearity" class="slide level2">
+<h2>Example: Cystic fibrosis - collinearity</h2>
+<p>Global P value small, no P values for model coefficients small?</p>
+<p>Correlations among variables are interfering with estimated standard errors - <em>collinearity</em></p>
+<p>Check via <em>variance inflation factor</em></p>
+<pre><code>##    age    sex height weight    bmp   fev1     rv    frc    tlc 
+## 21.830  2.269 13.955 47.781  7.116  5.420 10.538 17.143  2.660</code></pre>
+<p>Values of VIF &gt; 10 show concerning collinearity</p>
+<p>VIF values show why individual P values are not smaller</p>
+</section>
+<section id="example-cystic-fibrosis---model-assumptions" class="slide level2">
+<h2>Example: Cystic fibrosis - model assumptions</h2>
+<p>Check model assumptions</p>
+<p><img src="figs/unnamed-chunk-9-1.png" style="display: block; margin: auto;" /></p>
+<pre><code>## [1] 21 24</code></pre>
+</section>
+<section id="variable-selection---criteria-and-methods" class="slide level2">
+<h2>Variable selection - criteria and methods</h2>
+<p>Criteria applied to a model (well or not!) for deciding the fate of a variable:</p>
+<ul>
+<li><p>P value derived from some statistic (<span class="math inline">\(t\)</span>, <span class="math inline">\(\;F\)</span>, <span class="math inline">\(\;\chi^2\)</span>)</p></li>
+<li><p>measure of model fit - mean squared error (residual mean square), adjusted <span class="math inline">\(R^2\)</span></p></li>
+<li><p>information criterion - AIC, BIC (combination of measure of model fit and penalty for larger model)</p></li>
+</ul>
+<p>For these criteria, smaller is better, except for adjusted <span class="math inline">\(R^2\)</span>, where larger is better</p>
+</section>
+<section id="variable-selection---criteria-and-methods-1" class="slide level2">
+<h2>Variable selection - criteria and methods</h2>
+<p><strong>Methods</strong></p>
+<ul>
+<li>stepwise methods - forwards, backwards, both (1960)
+<ul>
+<li>one variable added or removed at each step</li>
+</ul></li>
+<li>validation methods
+<ul>
+<li>measure how well models predict using new data (1990s)</li>
+<li>randomly split data set into training and test sets</li>
+<li>all subsets combined with k-fold cross-validation</li>
+</ul></li>
+<li>penalised estimation methods - model coefficient estimates forced towards zero
+<ul>
+<li>penalty term is based on magnitude of model coefficients</li>
+<li>LASSO (1996)</li>
+</ul></li>
+</ul>
+</section>
+<section id="variable-selection---criteria-and-methods-2" class="slide level2">
+<h2>Variable selection - criteria and methods</h2>
+<p>Consensus view is use expert knowledge first to <em>simplify</em> your model</p>
+<ul>
+<li>eliminate unnecessary predictors</li>
+</ul>
+<p>Stepwise methods - can be useful but strongly criticised by some</p>
+<ul>
+<li>no statistical justification but if you must …</li>
+<li>do not use P values for decisions
+<ul>
+<li>hypothesis testing not appropriate for model selection as no a priori hypothesis is tested</li>
+<li>multiple testing problems</li>
+</ul></li>
+<li>use information criterion (AIC, BIC)</li>
+</ul>
+</section>
+<section id="variable-selection---criteria-and-methods-3" class="slide level2">
+<h2>Variable selection - criteria and methods</h2>
+<p>Validation methods</p>
+<ul>
+<li>common criterion is mean squared error</li>
+<li>good for comparing predictive capability of models and so variable selection</li>
+<li>choose appropriate “k” for k-fold cross-validation - one recommendation:
+<ul>
+<li>leave-one-out (i.e. N-fold c.v.) if n &lt; 20</li>
+<li>10-fold c.v. for 20&lt;n&lt;100</li>
+<li>5-fold c.v. for n&gt;100</li>
+</ul></li>
+</ul>
+<p>Penalised estimation methods (e.g. LASSO)</p>
+<ul>
+<li>main goal is predictive capability of model</li>
+<li>good when many parameters or small sample</li>
+</ul>
+</section>
+<section id="variable-selection---criteria-and-methods-4" class="slide level2">
+<h2>Variable selection - criteria and methods</h2>
+<p>Each method also has its <em>limitations</em> and <em>disadvantages</em></p>
+<ul>
+<li>Stepwise methods
+<ul>
+<li>can be undermined by collinearity</li>
+<li>validity of multiple steps is questionable</li>
+</ul></li>
+<li>AIC and BIC rely on model being close to correct</li>
+<li>Cross-validation requires only independent splits for training and test data but different results for different “k”</li>
+<li>LASSO estimates are biased and no standard errors are available</li>
+</ul>
+</section>
+<section id="example-cystic-fibrosis---active-predictors" class="slide level2">
+<h2>Example: Cystic fibrosis - active predictors</h2>
+<ul>
+<li>What variables are associated with (active predictors of) <code>pemax</code>?</li>
+</ul>
+<p>LASSO</p>
+<p><img src="figs/unnamed-chunk-10-1.png" style="display: block; margin: auto;" /></p>
+</section>
+<section id="example-cystic-fibrosis---active-predictors-1" class="slide level2">
+<h2>Example: Cystic fibrosis - active predictors</h2>
+<pre><code>## 9 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                 s0
+## age     .         
+## sex     .         
+## height  .         
+## weight  1.57131610
+## bmp    -1.14686453
+## fev1    1.29784065
+## rv      0.07231485
+## frc     .         
+## tlc     0.15479400</code></pre>
+<p>Available output:</p>
+<ul>
+<li>active predictors and model coefficients</li>
+<li>no P values</li>
+<li>no standard errors</li>
+</ul>
+</section>
+<section id="example-cystic-fibrosis---prediction-model" class="slide level2">
+<h2>Example: Cystic fibrosis - prediction model</h2>
+<ul>
+<li>What is a useful prediction model for <code>pemax</code>?</li>
+</ul>
+<p>k-fold cross validation (k = 1, leave-one-out) with all subsets in each fold</p>
+<pre><code>## folds
+##  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 
+##  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1 
+## 24 25 
+##  1  1</code></pre>
+<pre><code>##         1         2         3         4         5         6         7 
+##  974.6263  879.2297  727.7373  742.0240  972.0102 1050.7182 1043.0226 
+##         8         9 
+## 1029.0064 1049.6921</code></pre>
+<pre><code>## [1] No. of predictors in final model = 3</code></pre>
+</section>
+<section id="example-cystic-fibrosis---prediction-model-1" class="slide level2">
+<h2>Example: Cystic fibrosis - prediction model</h2>
+<p><img src="figs/unnamed-chunk-16-1.png" style="display: block; margin: auto;" /></p>
+</section>
+<section id="example-cystic-fibrosis---prediction-model-2" class="slide level2">
+<h2>Example: Cystic fibrosis - prediction model</h2>
+<pre><code>## (Intercept)      weight         bmp        fev1 
+##  126.333557    1.536475   -1.465406    1.108629</code></pre>
+<p>Look at terms in 4-predictor model from c.v. runs</p>
+<pre><code>## (Intercept)      weight         bmp        fev1          rv 
+##  63.9466933   1.7489143  -1.3772433   1.5476984   0.1257152</code></pre>
+<p>Strange:</p>
+<ul>
+<li><p>both weight and bmp are in model when cor(weight, bmp) = 0.67</p></li>
+<li><p>coef of bmp is negative when cor(pemax, bmp) = 0.23</p></li>
+</ul>
+<p>Possible overfitting?</p>
+<aside class="notes">
+<p>Note: BMP = Wt/(Ht)^2 as percentage of age-specific median for normal individuals</p>
+<p>cor(weight, bmp) = 0.67</p>
+<p>cor(pemax, bmp) = 0.23</p>
+<p>Strange both weight and bmp are in model and that coef of bmp is negative (despite weak +ve correlation between pemax and bmp)</p>
+</aside>
+</section>
+<section id="example-cystic-fibrosis---prediction-model-3" class="slide level2">
+<h2>Example: Cystic fibrosis - prediction model</h2>
+<p>Optimal model from cross-validation with all subsets fitted on full data set</p>
+<pre><code>##             Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 126.3336    34.7199  3.6387   0.0015
+## weight        1.5365     0.3644  4.2162   0.0004
+## bmp          -1.4654     0.5793 -2.5297   0.0195
+## fev1          1.1086     0.5144  2.1553   0.0429</code></pre>
+<pre><code>## [1] Adjusted R-sq = 0.5086       p value = 4e-04</code></pre>
+</section>
+<section id="example-cystic-fibrosis---prediction-model-4" class="slide level2">
+<h2>Example: Cystic fibrosis - prediction model</h2>
+<p>For prediction models:</p>
+<ul>
+<li><p>some overfitting is not a problem</p></li>
+<li><p>some collinearity is not a problem</p></li>
+</ul>
+</section>
+<section id="example-cystic-fibrosis---active-predictors-2" class="slide level2">
+<h2>Example: Cystic fibrosis - active predictors</h2>
+<p>Simplify the model</p>
+<ul>
+<li>use logic from expert knowledge - consider groups of predictors</li>
+</ul>
+<p>Lung function: <code>fev1</code>, <code>rv</code>, <code>frc</code>, <code>tlc</code></p>
+<p>Remove these other lung function indicators as a group</p>
+<p>Model comparison criteria:</p>
+<ul>
+<li><p>AIC - overfits, better for prediction model</p></li>
+<li><p>BIC - penalises larger models harder, good for active predictors</p></li>
+<li><p>As models are <em>nested</em>, can use an <span class="math inline">\(F\)</span> test</p></li>
+</ul>
+</section>
+<section id="example-cystic-fibrosis---active-predictors-3" class="slide level2">
+<h2>Example: Cystic fibrosis - active predictors</h2>
+<p>Simplify the model contd</p>
+<pre><code>## [1] AIC full model: 242.05</code></pre>
+<pre><code>## [1] AIC reduced model: 239.56</code></pre>
+<pre><code>## [1] AIC_full - AIC_red = 2.49</code></pre>
+<pre><code>## [1] BIC full model: 255.46</code></pre>
+<pre><code>## [1] BIC reduced model: 248.09</code></pre>
+<pre><code>## [1] BIC_full - BIC_red = 7.37</code></pre>
+<p>Model without lung function variables appears better</p>
+</section>
+<section id="example-cystic-fibrosis---active-predictors-4" class="slide level2">
+<h2>Example: Cystic fibrosis - active predictors</h2>
+<p>Simplify the model contd</p>
+<p><span class="math inline">\(F\)</span> test for nested models</p>
+<pre><code>## Analysis of Variance Table
+## 
+## Model 1: pemax ~ age + sex + height + weight + bmp + fev1 + rv + frc + 
+##     tlc
+## Model 2: pemax ~ age + sex + height + weight + bmp
+##   Res.Df     RSS Df Sum of Sq      F Pr(&gt;F)
+## 1     15  9731.2                           
+## 2     19 12129.2 -4     -2398 0.9241 0.4758</code></pre>
+<p>Smaller model is no worse than larger model</p>
+</section>
+<section id="example-cystic-fibrosis---active-predictors-5" class="slide level2">
+<h2>Example: Cystic fibrosis - active predictors</h2>
+<pre><code>##             Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 280.4482   124.9556  2.2444   0.0369
+## age          -3.0750     3.6352 -0.8459   0.4081
+## sex         -11.5281    10.3720 -1.1115   0.2802
+## height       -0.6853     0.7962 -0.8607   0.4001
+## weight        3.5546     1.5281  2.3261   0.0312
+## bmp          -1.9613     0.9263 -2.1174   0.0476</code></pre>
+<pre><code>## [1] Adjusted R-sq = 0.429       p value = 0.0064</code></pre>
+<p>Collinearity still present - possibly obscuring relationships</p>
+<pre><code>##       age       sex    height    weight       bmp 
+## 12.715251  1.038066 11.015970 28.123150  4.648941</code></pre>
+</section>
+<section id="example-cystic-fibrosis---active-predictors-6" class="slide level2">
+<h2>Example: Cystic fibrosis - active predictors</h2>
+<p>Simplify the model contd</p>
+<p>Remove <code>age</code></p>
+<pre><code>##             Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 251.3973   119.2859  2.1075   0.0479
+## sex         -11.5458    10.2979 -1.1212   0.2755
+## height       -0.8128     0.7762 -1.0472   0.3075
+## weight        2.6947     1.1329  2.3787   0.0275
+## bmp          -1.4881     0.7330 -2.0302   0.0558</code></pre>
+<pre><code>## [1] Adjusted R-sq = 0.4371       p value = 0.0033</code></pre>
+<p>Collinearity still present</p>
+<pre><code>##       sex    height    weight       bmp 
+##  1.038062 10.620847 15.678850  2.953131</code></pre>
+</section>
+<section id="example-cystic-fibrosis---active-predictors-7" class="slide level2">
+<h2>Example: Cystic fibrosis - active predictors</h2>
+<ul>
+<li><p>Perhaps no neat ending here in specifying active predictors</p>
+<ul>
+<li>cor(height, weight) = 0.92 so possibly one should have been removed at the start</li>
+</ul></li>
+<li><p>Different methods may lead to different results</p></li>
+</ul>
+</section>
+<section id="inference-after-model-selection---caveats" class="slide level2">
+<h2>Inference after model selection - Caveats</h2>
+<ul>
+<li><p>Full fitted model is only model giving accurate standard errors and P values</p></li>
+<li><p>Data-driven model selection, esp. stepwise methods, produce estimated standard errors of coefficients and P values that are too small<footnote content = "Harrell 2015, Regression Modeling Strategies, Springer, 2nd ed., s. 4.3"></footnote></p></li>
+<li><p>Most parsimonious model may not give best parameter estimates or predictions<footnote content = "Leeb & P&ouml;tscher 2005 https://doi.org/10.1017/S0266466605050036"></footnote></p></li>
+</ul>
+</section>
+<section id="variable-selection---recommendations" class="slide level2">
+<h2>Variable selection - Recommendations</h2>
+<ul>
+<li><p>In study design, use expert knowledge to list predictors (do not use the data later to “help”!)</p></li>
+<li><p>Plan to collect adequate data on all variables</p></li>
+<li><p>Pre-specify a small number of candidate models</p></li>
+<li><p>Avoid including too many predictors for your sample size</p></li>
+</ul>
+</section>
+<section id="variable-selection---recommendations-contd" class="slide level2">
+<h2>Variable selection - Recommendations contd</h2>
+<ul>
+<li><p>If variable selection is necessary:</p>
+<ul>
+<li><p>use penalised or resampling methods or</p></li>
+<li><p>if you must use stepwise methods</p>
+<ul>
+<li><p>use a limited, structured approach (e.g. consider groups of predictor variables)</p></li>
+<li><p>use <em>minimal</em> backwards elimination steps if you want parsimony (active predictors) rather than accuracy (good predictions)</p></li>
+<li><p>validate the model using a resampling method or external test data<footnote content = "Harrell 2015, Regression Modeling Strategies, Springer, 2nd ed., s. 4.12"></footnote></p></li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section id="variable-selection---recommendations-contd-1" class="slide level2">
+<h2>Variable selection - Recommendations contd</h2>
+<ul>
+<li><p>What is the role of modelling in your field?</p>
+<ul>
+<li><p>systems biology - complex problems addressed by computational modelling and simulation<footnote content = "Macleod 2018 https://doi.org/10.1007/s40656-017-0183-9"></footnote></p></li>
+<li><p>business - big data - Netflix Prize (100 million records)<footnote content = "Hastie 2015 Statistical learning with big data https://web.stanford.edu/~hastie/TALKS/SLBD_new.pdf"></footnote></p></li>
+<li><p>clinical science and health - diagnostic and prognostic inferences … for care decisions … policy<footnote content = "Henley 2020 https://doi.org/10.1080/24709360.2019.1618653"></footnote></p></li>
+<li><p>more generally - how statistical modelling decisions connect with answering scientific questions<footnote content = "Navarro 2019 https://doi.org/10.1007/s42113-018-0019-z"></footnote></p></li>
+</ul></li>
+</ul>
+</section>
+<section id="variable-selection---future-seminar-topics" class="slide level2">
+<h2>Variable selection - future seminar topics?</h2>
+<p>Many issues not raised:</p>
+<ul>
+<li><p>how many variables is it feasible to start with in a model?</p></li>
+<li><p>after you’ve done model selection, how much can you trust P values for model parameter estimates?</p></li>
+<li><p>what methods can be used for models with multiple categorical predictor variables?</p></li>
+<li><p>what about mixed models with fixed and random effects - i.e. where the data records are not independent, such as observations made on subjects in different groups?</p></li>
+<li><p>what methods can be used with other types of model - e.g. non-linear models or where response variable is binary, small count, categorical, …?</p></li>
+</ul>
+</section>
+<section id="useful-resources" class="slide level2">
+<h2>Useful resources</h2>
+<p><strong>Books</strong></p>
+<p>Dalgaard P 2008. <em>Introductory Statistics with R.</em> Springer, 2nd ed. (Contains description of example data set and analysis notes)</p>
+<p>Harrell F 2015. <em>Regression Modeling Strategies,</em> Springer, 2nd ed.</p>
+<p>James G et al. 2013. <em>An Introduction to Statistical Learning - with Applications in R.</em> Springer. <a href="https://doi.org/10.1007/978-1-4614-7138-7" class="uri">https://doi.org/10.1007/978-1-4614-7138-7</a> <strong>Extremely useful</strong> (Free download available here: <a href="http://faculty.marshall.usc.edu/gareth-james/ISL/" class="uri">http://faculty.marshall.usc.edu/gareth-james/ISL/</a>)</p>
+</section>
+<section id="useful-resources-1" class="slide level2">
+<h2>Useful resources</h2>
+<p><strong>Journal articles</strong></p>
+<p>Heinze G &amp; Dunkler D 2017. Five myths about variable selection. <em>Transplant International,</em> 30(1), 6–10. <a href="https://doi.org/10.1111/tri.12895" class="uri">https://doi.org/10.1111/tri.12895</a></p>
+<p>Heinze G et al. 2018. Variable selection – A review and recommendations for the practicing statistician. <em>Biometrical Journal,</em> 60(3), 431–449. <a href="https://doi.org/10.1002/bimj.201700067" class="uri">https://doi.org/10.1002/bimj.201700067</a></p>
+<p>Henley S et al. 2020. Statistical modeling methods: challenges and strategies. <em>Biostatistics and Epidemiology,</em> 4(1), 105–139. <a href="https://doi.org/10.1080/24709360.2019.1618653" class="uri">https://doi.org/10.1080/24709360.2019.1618653</a></p>
+<p>Leeb H &amp; Pötscher B M 2005. Model selection and inference: facts and fiction. <em>Econometric Theory</em> 21(1), 21-59. <a href="https://doi.org/10.1017/S0266466605050036" class="uri">https://doi.org/10.1017/S0266466605050036</a></p>
+</section>
+<section id="useful-resources-2" class="slide level2">
+<h2>Useful resources</h2>
+<p><strong>Journal articles</strong></p>
+<p>Sauerbrei W et al. 2020. State of the art in selection of variables and functional forms in multivariable analysis—outstanding issues. <em>Diagnostic and Prognostic Research,</em> 4(1). <a href="https://doi.org/10.1186/s41512-020-00074-3" class="uri">https://doi.org/10.1186/s41512-020-00074-3</a></p>
 </section>
     </div>
   </div>
@@ -521,8 +912,6 @@ document.getElementsByTagName('head')[0].appendChild(style);
       // Full list of configuration options available at:
       // https://github.com/hakimel/reveal.js#configuration
       Reveal.initialize({
-        // Display the page number of the current slide
-        slideNumber: true,
         // Push each slide change to the browser history
         history: true,
         // Vertical centering of slides

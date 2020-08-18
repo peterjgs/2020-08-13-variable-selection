@@ -1,0 +1,56 @@
+
+.title-slide hgroup h1 {
+  font-size: 48px;
+  font-family: "Helvetica";
+  letter-spacing: -1px;
+  color: #0000ff;
+}
+
+h2 { /* Header 2 */
+    font-size: 36px;
+    font-family: "Helvetica";
+    color: #0000ff;
+    line-height: 1.1;
+}
+
+
+
+.gdbar img {
+  width: 250px !important;
+  height: 90px !important;
+  margin: 0px 0px;
+}
+
+.gdbar {
+  width: 280px !important;
+  height: 110px !important;
+  margin: 0px 0px;
+}
+
+
+slides > slide:not(.nobackground):before {
+  width: 100px;
+  height: 36px;
+  background-size: 100px 36px;
+}
+
+
+slides > slide.backdrop {
+  background: white;
+}
+
+
+
+/*<style type="text/css">*/
+<style>
+  body p {
+  color: #000000;
+}
+
+  ul { 
+  display: block;
+  color: black;
+}
+
+</style>
+

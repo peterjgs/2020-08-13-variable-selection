@@ -1,25 +1,31 @@
 ---
 title: "Variable selection"
-author: "Peter Geelan-Small, Stats Central"
+author: "Peter Geelan-Small, Stats Central, UNSW"
 date: "13/08/2020"
-output: 
+output:
   ioslides_presentation:
-    css: slide.css
+    logo: StatsCentralLogo_ioslides.png
+    css: ioslide_styles.css
 ---    
 
 
 <style type="text/css">
-
 body p {
   color: #000000;
-}
 
 ul { 
   display: block;
   color: #000000;
 }
 
+ol { 
+  display: block;
+  color: #000000;
+}
+
 </style>
+
+
 
 <style>
 div.footnotes {
@@ -28,6 +34,7 @@ div.footnotes {
   margin-bottom: 10px;
   width: 80%;
   font-size: 0.6em;
+  color: #000000;
 }
 </style>
 
@@ -49,6 +56,7 @@ div.footnotes {
     });
   });
 </script>
+
 
 
 ```{r setup, include = F}
@@ -78,27 +86,27 @@ library(leaps)
 ```
 
 
-## Statistical inference
+## Statistical inference - main types of inference
 
-Types of statistical inference:
+- Parameter estimation - finding a plausible range of values for a parameter of interest  - e.g. coefficient of a particular predictor
 
-- looking at a focal predictor - e.g. is the coefficient of that predictor equal to zero?
+- Hypothesis testing - looking at the effect of a focal predictor - testing if the coefficient of the predictor is zero
 
-- predicting future values of response from predictors
+- Predicting future values of the response from predictors
 
-- finding a plausible range of values for a parameter of interest
-
-- finding which predictors are _active_ predictors
+- Finding which predictors are associated with the response - _active_ predictors versus _inactive_ predictors
 
 
-Variable or model selection is a type of inference
+A good predictive model aids parameter estimation and hypothesis testing
+
+Variable selection is a type of inference - one of many methods in general area of model selection
 
 
 ##  Example: Respiratory muscle strength in cystic fibrosis
 
 Measurements of a number of clinical variables were taken on 25 patients with cystic fibrosis aged from 7 to 23 years. The response variable is maximum expiratory pressure (`pemax`).<footnote content = "Dalgaard 2008, Introductory Statistics with R, Springer; O’Neill et al. 1983,  Am. Rev. Respir. Dis., 128:1051–1054."></footnote>
 
-- What variables are useful predictors of `pemax`?
+- What variables are associated with (active predictors of) `pemax`?
 
 - What is a useful prediction model for `pemax`?
 
@@ -106,9 +114,8 @@ Measurements of a number of clinical variables were taken on 25 patients with cy
 
 _Response_ 
 
-- `pemax`:  maximum expiratory pressure
+- `pemax`: maximum expiratory pressure
 
-(decrease is an index of malnutrition effect on pressures)
 
 
 ##  Example: Cystic fibrosis
@@ -117,7 +124,7 @@ _Response_
 - `sex`:  coded 0: male, 1:female
 - `height`: height (cm)
 - `weight`: weight (kg)
-- `bmp`: body mass (% of normal)
+- `bmp`: body mass pc. (% of normal) - indicator of malnutrition
 
 _Lung function indicators_
 
@@ -125,6 +132,7 @@ _Lung function indicators_
 - `rv`:  residual volume
 - `frc`: functional residual capacity
 - `tlc`: total lung capacity
+
 
 <div class="notes">
 
@@ -238,46 +246,46 @@ par(mfrow = c(1, 1))
 
 
 
-## Model or variable selection - criteria and methods
+## Variable selection - criteria and methods
 
-Criteria used (well or not!) for deciding the fate of a variable:
+Criteria applied to a model (well or not!) for deciding the fate of a variable:
 
 - P value derived from some statistic ($t$, $\;F$, $\;\chi^2$)
 
-- measure of model fit - mean squared error (residual mean square), adjusted $R^2$
+- Measure of model fit - mean squared error (residual mean square), adjusted $R^2$
 
-- information criterion - AIC, BIC (combination of measure of model fit and penalty for larger model)
-
-
-For all of these, smaller is better
+- Information criterion - AIC, BIC (combination of measure of model fit and penalty for larger model)
 
 
-## Model or variable selection - criteria and methods
+For these criteria, smaller is better, except for adjusted $R^2$, where larger is better
+
+
+## Variable selection - criteria and methods
 
 
 **Methods**
 
-- stepwise methods - forwards, backwards, both (1960)
+- Stepwise methods - forwards, backwards, both (1960)
   - one variable added or removed at each step
 
-- validation methods
+- Validation methods
   - measure how well models predict using new data (1990s)
   - randomly split data set into training and test sets
   - all subsets combined with k-fold cross-validation
 
-- penalised estimation methods - model coefficient estimates forced towards zero
+- Penalised estimation methods - model coefficient estimates forced towards zero
   - penalty term is based on magnitude of model coefficients
   - LASSO (1996)
 
 
-## Model or variable selection - criteria and methods
+## Variable selection - criteria and methods
 
-Use expert knowledge first to _simplify_ your model
+Consensus view is use expert knowledge first to _simplify_ your model
 
 - eliminate unnecessary predictors
 
 
-Stepwise methods
+Stepwise methods - can be useful but strongly criticised by some
 
 - no statistical justification but if you must ...
 - do not use P values for decisions 
@@ -287,29 +295,31 @@ Stepwise methods
 
 
 
-## Model or variable selection - criteria and methods
+## Variable selection - criteria and methods
 
 Validation methods
 
 - common criterion is mean squared error
-- good for comparing predictive capability of models and so model selection
+- good for comparing predictive capability of models and so variable selection
 - choose appropriate "k" for k-fold cross-validation - one recommendation:
   - leave-one-out (i.e. N-fold c.v.) if n < 20
   - 10-fold c.v. for 20<n<100
   - 5-fold c.v. for n>100
 
 
-Penalised estimation methods
+Penalised estimation methods (e.g. LASSO)
 
 - main goal is predictive capability of model
 - good when many parameters or small sample
 
 
-## Model or variable selection - criteria and methods
+## Variable selection - criteria and methods
 
 Each method also has its _limitations_ and _disadvantages_
 
-- Stepwise methods can be undermined by collinearity
+- Stepwise methods 
+  - can be undermined by collinearity
+  - validity of multiple steps is questionable
 - AIC and BIC rely on model being close to correct
 - Cross-validation requires only independent splits for training and test data but different results for different "k"
 - LASSO estimates are biased and no standard errors are available
@@ -319,7 +329,7 @@ Each method also has its _limitations_ and _disadvantages_
 
 ##  Example: Cystic fibrosis - active predictors
 
-- What variables are useful predictors of `pemax`?
+- What variables are associated with (active predictors of) `pemax`?
 
 LASSO
 
@@ -359,7 +369,7 @@ Available output:
 
 - What is a useful prediction model for `pemax`?
 
-k-fold cross validation (k = 1, leave-one-out) with all subsets in each fold
+k-fold cross-validation (k = 1, leave-one-out) with all subsets in each fold
 
 
 ```{r}
@@ -430,7 +440,7 @@ mean.cv.errors
 
 ```{r}
 
-print(paste("No. of predictors in final model =", which.min(mean.cv.errors), quote = F))
+print(paste("No. of predictors in final model =", which.min(mean.cv.errors)), quote = F)
 
 ```
 
@@ -537,7 +547,7 @@ Model comparison criteria:
 
 - BIC - penalises larger models harder, good for active predictors
 
-- As models are _nested_, can use an $F$ test
+- As models are _nested_, can use an $F$ test (see note at end of slides)
 
 
 
@@ -592,7 +602,7 @@ $F$ test for nested models
 
 ```{r}
 
-anova(cfib.lm1, cfib.lm.noLung, test = "F")
+anova(cfib.lm.noLung, cfib.lm1, test = "F")
 
 ```
 
@@ -660,29 +670,52 @@ vif(cfib.lm.noLung2)
 
 ##  Example: Cystic fibrosis - active predictors
 
-Perhaps no neat ending here in specifying active predictors
+- Perhaps no neat ending here in specifying active predictors
 
-cor(height, weight) = 0.92 so possibly one should have been removed at the start
+  - cor(height, weight) = 0.92 so possibly one should have been removed at the start
 
-<br>
+- Different methods may lead to different results
 
-Different methods may lead to different results
+
+
+## Inference after model selection - Caveats
+
+- Full fitted model is only model giving accurate standard errors and P values
+
+- Data-driven model selection, esp. stepwise methods, produce estimated standard errors of coefficients and P values that are too small<footnote content = "Harrell 2015, Regression Modeling Strategies, Springer, 2nd ed., s. 4.3"></footnote> 
+
+- Most parsimonious model may not give best parameter estimates or predictions<footnote content = "Leeb & P&ouml;tscher 2005 https://doi.org/10.1017/S0266466605050036"></footnote>
+
+
+
 
 
 ##  Variable selection - Recommendations
 
-- In study design, use expert knowledge to list candidate predictors (do not use the data later to "help" you!) and plan to collect adequate data 
+- In study design, use expert knowledge to list predictors (do not use the data later to "help"!)
+
+- Plan to collect adequate data on all variables
+
+- Pre-specify a small number of candidate models
 
 - Avoid including too many predictors for your sample size
 
-- Ask yourself whether variable selection is _necessary_; if so
 
-  - do it in a limited, structured way (e.g. consider groups of predictor variables)
+##  Variable selection - Recommendations contd
+
+- If variable selection is necessary:
+
+  - use penalised or resampling methods or
+
+  - if you must use stepwise methods
+
+    - use a limited, structured approach (e.g. consider groups of predictor variables)
   
-  - use _minimal_ backwards elimination steps if you want parsimony (active predictors) rather than accuracy (good predictions) and use model validation techniques<footnote content = "Harrell 2015, Regression Modeling Strategies, Springer, 2nd ed., s. 4.12"></footnote>
+    - use _minimal_ backwards elimination steps if you want parsimony (active predictors) rather than accuracy (good predictions)
 
-
-##  Variable selection - Recommendations
+    - validate the model using a resampling method or external test data<footnote content = "Harrell 2015, Regression Modeling Strategies, Springer, 2nd ed., s. 4.12"></footnote>
+  
+##  Variable selection - Recommendations contd
 
   
 - What is the role of modelling in your field?  
@@ -713,5 +746,51 @@ Many issues not raised:
 
 
 
+##  Useful resources
+
+**Books**
+
+Dalgaard P 2008. _Introductory Statistics with R._ Springer, 2nd ed. (Contains description of example data set and analysis notes - UNSW Library e-book)
+
+Harrell F 2015. _Regression Modeling Strategies,_ Springer, 2nd ed.
+
+James G et al. 2013. _An Introduction to Statistical Learning - with Applications in R._ Springer. https://doi.org/10.1007/978-1-4614-7138-7 **Extremely useful** (Free download available here: http://faculty.marshall.usc.edu/gareth-james/ISL/)
 
 
+##  Useful resources
+
+**Journal articles**
+
+Heinze G & Dunkler D 2017. Five myths about variable selection. _Transplant International,_ 30(1), 6–10. https://doi.org/10.1111/tri.12895
+
+Heinze G et al. 2018. Variable selection – A review and recommendations for the practicing statistician. _Biometrical Journal,_ 60(3), 431–449. https://doi.org/10.1002/bimj.201700067
+
+Henley S et al. 2020. Statistical modeling methods: challenges and strategies. _Biostatistics and Epidemiology,_ 4(1), 105–139. https://doi.org/10.1080/24709360.2019.1618653
+
+Krzywinski M & Altman N 2015. Points of Significance: Multiple Linear Regression, _Nature Methods_ 12(12): 1103-1104. https://doi.org/10.1038/nmeth.3665
+
+
+##  Useful resources
+
+**Journal articles**
+
+Leeb H & P&ouml;tscher B M 2005. Model selection and inference: facts and fiction. _Econometric Theory_ 21(1), 21-59. https://doi.org/10.1017/S0266466605050036
+
+Sauerbrei W et al. 2020. State of the art in selection of variables and functional forms in multivariable analysis—outstanding issues. _Diagnostic and Prognostic Research,_ 4(1). https://doi.org/10.1186/s41512-020-00074-3
+
+
+## Note on $F$ test
+
+To test whether _one_ parameter in our regression model is zero, we can use a $t$ test because a $t$ test can handle one parameter at a time. The $t$ test for whether the coefficient of `fev1` is zero, given all the other terms remain in the model, gives a $P$ value of 0.33 (see slide 9).
+
+If, however, we want to test whether the coefficients of a group of parameters are _all_ zero, we cannot use a $t$ test, which can handle only one parameter at a time, but we can use an $F$ test, if the model without that group of parameters is nested within the larger model. It's called an $F$ test because the test statistic is an $F$ statistic.
+
+(continued over)
+
+## Note on $F$ test contd
+
+To test if the coefficients of `fev1`, `rv`, `frc` and `tlc` are _all_ zero, we can use an $F$ test to compare the model without those four predictors against the model with all the nine predictors because (1) the two models are nested and (2) we are testing more than one parameter at the same time (see slide 26).
+
+See Quinn G & Keough M 2002. _Experimental Design and Data Analysis for Biologists,_ Cambridge University Press, sect. 6.1.4 (UNSW Library e-book)
+
+Note that if we were using a different type of model not fitted by least squares, we might need to use a different test, appropriate for that type of model, to answer this type of question.
